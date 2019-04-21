@@ -1,19 +1,34 @@
+import 'reflect-metadata';
+
+const KEY_IS_INJECTABLE = Symbol('IS_INJECTABLE');
+const KEY_PARAMS = 'design:paramtypes';
+
+// Decorator to make metadata annotation available
+export function Injectable() {
+  return function (target: any) {
+    Reflect.defineMetadata(KEY_IS_INJECTABLE, true, target);
+    return target;
+  }
+}
+
 interface Token<T> extends Function {
   new (...args: any[]): T;
 }
 
-type Factory<T> = (container: Container) => T;
-
 interface Item<T> {
-  factory: Factory<T>;
+  clazz: Token<T>;
   instance?: T;
 }
 
 export class Container {
   private readonly container = new Map<Function, Item<any>>();
 
-  provide<T>(token: Token<T>, factory: Factory<T>) {
-    this.container.set(token, { factory });
+  provide<T>(token: Token<T>, clazz?: Token<T>) {
+    const actualClass = clazz || token;
+    if (actualClass.prototype.constructor.length && !this.isInjectable(actualClass)) {
+      throw new Error(`${actualClass.name} is not decorated!`);
+    }
+    this.container.set(token, { clazz: actualClass });
   }
 
   get<T>(token: Token<T>): T {
@@ -22,14 +37,29 @@ export class Container {
       throw new Error(`Nothing found for token ${token.name}`);
     }
   
-    const { factory, instance } = item;
+    const { clazz, instance } = item;
   
     if (!instance) {
-      const newInstance = factory(this);
-      this.container.set(token, { factory, instance: newInstance });
+      const params = this.getInjectedParams(clazz);
+      const newInstance = Reflect.construct(clazz, params);
+      this.container.set(token, { clazz, instance: newInstance });
       return newInstance;
     }
-  
+
     return instance;
+  }
+
+  // Check if target is decorated
+  private isInjectable(target: Function): boolean {
+    return Reflect.getMetadata(KEY_IS_INJECTABLE, target) === true;
+  }
+
+  // Read type information from metadata
+  private getInjectedParams(clazz: Function): any[] {
+    const argTypes = Reflect.getMetadata(KEY_PARAMS, clazz);
+    if (argTypes === undefined) {
+      return [];
+    }
+    return argTypes.map((token) => this.get(token));
   }
 }

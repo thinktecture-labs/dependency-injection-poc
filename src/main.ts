@@ -1,25 +1,15 @@
-import { Container } from './container';
-
-// Our first class Decorator
-export function DecorateClass() {
-  return function(target: any) {
-    console.log(`Decorating ${target.name}`);
-    return target;
-  };
-}
+import { Container, Injectable } from './container';
 
 // Demo Classes
-@DecorateClass()
 class Service {
   public foo = 'I am a property of Service';
 }
 
-@DecorateClass()
 class ServiceMock {
   public foo = 'I am the mocked Service';
 }
 
-@DecorateClass()
+@Injectable()
 class Consumer {
   constructor(private readonly service: Service) {}
 
@@ -30,8 +20,8 @@ class Consumer {
 
 // Setup DI Container
 const container = new Container();
-container.provide(Service, () => new ServiceMock());
-container.provide(Consumer, c => new Consumer(c.get(Service)));
+container.provide(Service, ServiceMock);
+container.provide(Consumer);
 
 // Demo Application
 const consumer = container.get(Consumer);
