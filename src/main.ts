@@ -1,14 +1,25 @@
 import { Container } from './container';
 
+// Our first class Decorator
+export function DecorateClass() {
+  return function(target: any) {
+    console.log(`Decorating ${target.name}`);
+    return target;
+  };
+}
+
 // Demo Classes
+@DecorateClass()
 class Service {
   public foo = 'I am a property of Service';
 }
 
+@DecorateClass()
 class ServiceMock {
   public foo = 'I am the mocked Service';
 }
 
+@DecorateClass()
 class Consumer {
   constructor(private readonly service: Service) {}
 
