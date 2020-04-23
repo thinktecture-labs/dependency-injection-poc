@@ -1,0 +1,11 @@
+{
+  "name": "ts-viper",
+  "scripts": {
+    "start": "npm run build && node ./dist/main.js",
+    "build": "tsc --build tsconfig.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "typescript": "^3.7.5"
+  }
+}
